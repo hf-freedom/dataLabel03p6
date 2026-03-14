@@ -1,6 +1,7 @@
 package com.example.datalabel.controller;
 
 import com.example.datalabel.common.Result;
+import com.example.datalabel.common.annotation.SIRequiredPermission;
 import com.example.datalabel.entity.User;
 import com.example.datalabel.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpSession;
 import java.util.List;
 
+@SIRequiredPermission
 @RestController
 @RequestMapping("/api/user")
 public class UserController {
@@ -36,6 +38,7 @@ public class UserController {
         return Result.success(userService.delete(id));
     }
     
+    @SIRequiredPermission(required = false)
     @PostMapping("/updateProfile")
     public Result<Boolean> updateProfile(@RequestBody User user, HttpSession session) {
         User currentUser = (User) session.getAttribute("user");
@@ -51,6 +54,7 @@ public class UserController {
         return Result.success(result);
     }
     
+    @SIRequiredPermission(required = false)
     @GetMapping("/profile")
     public Result<User> getProfile(HttpSession session) {
         User user = (User) session.getAttribute("user");

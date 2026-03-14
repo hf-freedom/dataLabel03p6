@@ -1,6 +1,7 @@
 package com.example.datalabel.controller;
 
 import com.example.datalabel.common.Result;
+import com.example.datalabel.common.annotation.SIRequiredPermission;
 import com.example.datalabel.entity.Menu;
 import com.example.datalabel.entity.Role;
 import com.example.datalabel.entity.User;
@@ -94,6 +95,7 @@ public class LoginController {
         return "redirect:/login";
     }
     
+    @SIRequiredPermission(required = false)
     @GetMapping("/main")
     public ModelAndView mainPage(HttpSession session) {
         ModelAndView mv = new ModelAndView();
@@ -156,6 +158,7 @@ public class LoginController {
                 .collect(Collectors.toList());
     }
     
+    @SIRequiredPermission(required = false)
     @GetMapping("/api/menu/user")
     @ResponseBody
     public Result<List<Menu>> getUserMenus(HttpSession session) {
@@ -168,5 +171,10 @@ public class LoginController {
             session.setAttribute("menus", menus);
         }
         return Result.success(menus);
+    }
+
+    @GetMapping("/forbidden")
+    public String forbidden() {
+        return "forbidden";
     }
 }

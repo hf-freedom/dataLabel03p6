@@ -174,6 +174,25 @@
                 <tbody id="menuTableBody"></tbody>
             </table>
         </div>
+        
+        <div id="apiContent" class="content-box">
+            <h4>API管理 - API与资源绑定</h4>
+            <button class="btn btn-primary" onclick="openApiModal()"><i class="fa fa-plus"></i> 新增API</button>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>API名称</th>
+                        <th>请求路径</th>
+                        <th>请求方法</th>
+                        <th>描述</th>
+                        <th>绑定菜单</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="apiTableBody"></tbody>
+            </table>
+        </div>
     </div>
     
     <div class="modal fade" id="userModal" tabindex="-1">
@@ -305,6 +324,40 @@
         </div>
     </div>
     
+    <div class="modal fade" id="apiModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h4 class="modal-title">API信息</h4></div>
+                <div class="modal-body">
+                    <form id="apiForm">
+                        <input type="hidden" id="apiId">
+                        <div class="form-group"><label>API名称</label><input type="text" class="form-control" id="apiName" required></div>
+                        <div class="form-group"><label>请求路径</label><input type="text" class="form-control" id="apiPath" placeholder="/api/user/list" required></div>
+                        <div class="form-group"><label>请求方法</label>
+                            <select class="form-control" id="apiMethod" required>
+                                <option value="GET">GET</option>
+                                <option value="POST">POST</option>
+                                <option value="PUT">PUT</option>
+                                <option value="DELETE">DELETE</option>
+                                <option value="PATCH">PATCH</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>描述</label><textarea class="form-control" id="apiDesc"></textarea></div>
+                        <div class="form-group">
+                            <label>绑定菜单</label>
+                            <p class="help-block small">按住Ctrl键可多选，选择该API需要绑定的资源菜单</p>
+                            <select class="form-control" id="apiMenuIds" multiple style="height: 150px;"></select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveApi()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
     <script>
@@ -345,6 +398,17 @@
                     } else if (type === 'menu') {
                         var typeText = item.menuType === 1 ? '目录' : (item.menuType === 2 ? '菜单' : '按钮');
                         tr += '<td>' + item.id + '</td><td>' + item.menuName + '</td><td>' + item.menuCode + '</td><td>' + (item.menuUrl || '-') + '</td><td>' + typeText + '</td><td>' + item.sort + '</td><td>' + statusText + '</td>';
+                    } else if (type === 'api') {
+                        var menuNames = '-';
+                        if (item.menuIds && item.menuIds.length > 0) {
+                            var names = [];
+                            item.menuIds.forEach(function(mid) {
+                                var menu = allMenus.find(function(m) { return m.id === mid; });
+                                if (menu) names.push(menu.menuName);
+                            });
+                            menuNames = names.length > 0 ? names.join(', ') : '-';
+                        }
+                        tr += '<td>' + item.id + '</td><td>' + item.apiName + '</td><td>' + item.apiPath + '</td><td>' + item.apiMethod + '</td><td>' + (item.description || '-') + '</td><td>' + menuNames + '</td>';
                     }
                     tr += '<td><button class="btn btn-sm btn-info" onclick="edit' + type.charAt(0).toUpperCase() + type.slice(1) + '(' + item.id + ')">编辑</button> <button class="btn btn-sm btn-danger" onclick="delete' + type.charAt(0).toUpperCase() + type.slice(1) + '(' + item.id + ')">删除</button></td></tr>';
                     tbody.append(tr);
@@ -385,6 +449,12 @@
                     parentOptions += '<option value="' + item.id + '">' + item.menuName + '</option>'; 
                 });
                 $('#menuParentId').html(parentOptions);
+                
+                var apiMenuOptions = '';
+                res.data.forEach(function(item) {
+                    apiMenuOptions += '<option value="' + item.id + '">' + item.menuName + '</option>';
+                });
+                $('#apiMenuIds').html(apiMenuOptions);
             });
         }
         
@@ -392,6 +462,7 @@
         function openRoleModal() { $('#roleId').val(''); $('#roleForm')[0].reset(); $('#roleModal').modal('show'); }
         function openOrgModal() { $('#orgId').val(''); $('#orgForm')[0].reset(); $('#orgModal').modal('show'); }
         function openMenuModal() { $('#menuId').val(''); $('#menuForm')[0].reset(); $('#menuModal').modal('show'); }
+        function openApiModal() { $('#apiId').val(''); $('#apiForm')[0].reset(); $('#apiModal').modal('show'); }
         
         function editUser(id) {
             $.get('/api/user/' + id, function(res) {
@@ -452,6 +523,21 @@
                 $('#menuSort').val(menu.sort);
                 $('#menuStatus').val(menu.status);
                 $('#menuModal').modal('show');
+            });
+        }
+
+        function editApi(id) {
+            $.get('/api/api/' + id, function(res) {
+                var api = res.data;
+                $('#apiId').val(api.id);
+                $('#apiName').val(api.apiName);
+                $('#apiPath').val(api.apiPath);
+                $('#apiMethod').val(api.apiMethod);
+                $('#apiDesc').val(api.description);
+                if (api.menuIds && api.menuIds.length > 0) {
+                    $('#apiMenuIds').val(api.menuIds.map(function(id) { return String(id); }));
+                }
+                $('#apiModal').modal('show');
             });
         }
         
@@ -554,15 +640,42 @@
         function deleteRole(id) { if (confirm('确定删除？')) { $.ajax({ url: '/api/role/' + id, type: 'DELETE', success: function() { loadList('role'); } }); } }
         function deleteOrg(id) { if (confirm('确定删除？')) { $.ajax({ url: '/api/org/' + id, type: 'DELETE', success: function() { loadList('org'); } }); } }
         function deleteMenu(id) { if (confirm('确定删除？')) { $.ajax({ url: '/api/menu/' + id, type: 'DELETE', success: function() { loadList('menu'); } }); } }
+        function deleteApi(id) { if (confirm('确定删除？')) { $.ajax({ url: '/api/api/' + id, type: 'DELETE', success: function() { loadList('api'); } }); } }
+
+        function saveApi() {
+            var menuIds = $('#apiMenuIds').val() || [];
+            menuIds = menuIds.map(function(id) { return parseInt(id); });
+            var data = {
+                id: $('#apiId').val() || null,
+                apiName: $('#apiName').val(),
+                apiPath: $('#apiPath').val(),
+                apiMethod: $('#apiMethod').val(),
+                description: $('#apiDesc').val(),
+                menuIds: menuIds
+            };
+            $.ajax({
+                url: '/api/api/save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(res) {
+                    if (res.code === 200) { $('#apiModal').modal('hide'); loadList('api'); }
+                    else { alert(res.message); }
+                }
+            });
+        }
+        
+        var allApis = [];
         
         var menuCodeMap = {
             'user': '用户管理',
             'role': '角色管理',
             'org': '组织机构',
-            'menu': '菜单管理'
+            'menu': '菜单管理',
+            'api': 'API管理'
         };
         
-        var contentTypes = ['user', 'role', 'org', 'menu'];
+        var contentTypes = ['user', 'role', 'org', 'menu', 'api'];
         
         function loadUserMenus() {
             $.get('/api/menu/user', function(res) {
