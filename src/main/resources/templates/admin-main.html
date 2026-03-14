@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>管理后台 - 数据标注管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <style>
+        body { padding-top: 0; }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background: #2c3e50;
+            padding-top: 60px;
+        }
+        .sidebar-header {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 60px;
+            background: #1a252f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-menu > li > a {
+            display: block;
+            padding: 15px 20px;
+            color: #b8c7ce;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-menu > li > a:hover,
+        .sidebar-menu > li.active > a {
+            background: #1a252f;
+            color: white;
+            border-left-color: #667eea;
+        }
+        .sidebar-menu > li > a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        .main-content {
+            margin-left: 220px;
+            padding: 20px;
+        }
+        .content-header {
+            background: white;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .content-box {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .content-box.active { display: block; }
+        .user-info {
+            float: right;
+            line-height: 60px;
+            color: #666;
+        }
+        .user-info a { margin-left: 15px; }
+        .table { margin-top: 15px; }
+        .modal-body .form-group { margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar-header">数据标注管理系统</div>
+    <div class="sidebar">
+        <ul class="sidebar-menu" id="sidebarMenu">
+        </ul>
+    </div>
+    
+    <div class="main-content">
+        <div class="content-header">
+            <span class="user-info">
+                欢迎，<span th:text="${user.name}"></span>
+                <a href="/logout"><i class="fa fa-sign-out"></i> 退出</a>
+            </span>
+        </div>
+        
+        <div id="userContent" class="content-box active">
+            <h4>用户管理</h4>
+            <button class="btn btn-primary" onclick="openUserModal()"><i class="fa fa-plus"></i> 新增用户</button>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户名</th>
+                        <th>姓名</th>
+                        <th>邮箱</th>
+                        <th>电话</th>
+                        <th>角色</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody"></tbody>
+            </table>
+        </div>
+        
+        <div id="roleContent" class="content-box">
+            <h4>角色管理</h4>
+            <button class="btn btn-primary" onclick="openRoleModal()"><i class="fa fa-plus"></i> 新增角色</button>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>角色名称</th>
+                        <th>角色编码</th>
+                        <th>描述</th>
+                        <th>菜单权限</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="roleTableBody"></tbody>
+            </table>
+        </div>
+        
+        <div id="orgContent" class="content-box">
+            <h4>组织机构管理</h4>
+            <button class="btn btn-primary" onclick="openOrgModal()"><i class="fa fa-plus"></i> 新增机构</button>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>机构名称</th>
+                        <th>机构编码</th>
+                        <th>上级机构</th>
+                        <th>排序</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="orgTableBody"></tbody>
+            </table>
+        </div>
+        
+        <div id="menuContent" class="content-box">
+            <h4>菜单管理</h4>
+            <button class="btn btn-primary" onclick="openMenuModal()"><i class="fa fa-plus"></i> 新增菜单</button>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>菜单名称</th>
+                        <th>菜单编码</th>
+                        <th>URL</th>
+                        <th>类型</th>
+                        <th>排序</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="menuTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="userModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h4 class="modal-title">用户信息</h4></div>
+                <div class="modal-body">
+                    <form id="userForm">
+                        <input type="hidden" id="userId">
+                        <div class="form-group"><label>用户名</label><input type="text" class="form-control" id="userUsername" required></div>
+                        <div class="form-group"><label>密码</label><input type="password" class="form-control" id="userPassword"></div>
+                        <div class="form-group"><label>姓名</label><input type="text" class="form-control" id="userName" required></div>
+                        <div class="form-group"><label>邮箱</label><input type="email" class="form-control" id="userEmail"></div>
+                        <div class="form-group"><label>电话</label><input type="text" class="form-control" id="userPhone"></div>
+                        <div class="form-group"><label>组织机构</label><select class="form-control" id="userOrgId"></select></div>
+                        <div class="form-group">
+                            <label>角色</label>
+                            <p class="help-block small">按住Ctrl键可多选</p>
+                            <select class="form-control" id="userRoleIds" multiple style="height: 120px;"></select>
+                        </div>
+                        <div class="form-group"><label>状态</label>
+                            <select class="form-control" id="userStatus">
+                                <option value="1">启用</option>
+                                <option value="0">禁用</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveUser()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="roleModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h4 class="modal-title">角色信息</h4></div>
+                <div class="modal-body">
+                    <form id="roleForm">
+                        <input type="hidden" id="roleId">
+                        <div class="form-group"><label>角色名称</label><input type="text" class="form-control" id="roleName" required></div>
+                        <div class="form-group"><label>角色编码</label><input type="text" class="form-control" id="roleCode" required></div>
+                        <div class="form-group"><label>描述</label><textarea class="form-control" id="roleDesc"></textarea></div>
+                        <div class="form-group">
+                            <label>菜单权限</label>
+                            <p class="help-block small">按住Ctrl键可多选</p>
+                            <select class="form-control" id="roleMenuIds" multiple style="height: 200px;"></select>
+                        </div>
+                        <div class="form-group"><label>状态</label>
+                            <select class="form-control" id="roleStatus">
+                                <option value="1">启用</option>
+                                <option value="0">禁用</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveRole()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="orgModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h4 class="modal-title">机构信息</h4></div>
+                <div class="modal-body">
+                    <form id="orgForm">
+                        <input type="hidden" id="orgId">
+                        <div class="form-group"><label>机构名称</label><input type="text" class="form-control" id="orgName" required></div>
+                        <div class="form-group"><label>机构编码</label><input type="text" class="form-control" id="orgCode" required></div>
+                        <div class="form-group"><label>上级机构</label><select class="form-control" id="orgParentId"><option value="0">顶级机构</option></select></div>
+                        <div class="form-group"><label>排序</label><input type="number" class="form-control" id="orgSort" value="1"></div>
+                        <div class="form-group"><label>描述</label><textarea class="form-control" id="orgDesc"></textarea></div>
+                        <div class="form-group"><label>状态</label>
+                            <select class="form-control" id="orgStatus">
+                                <option value="1">启用</option>
+                                <option value="0">禁用</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveOrg()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="menuModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h4 class="modal-title">菜单信息</h4></div>
+                <div class="modal-body">
+                    <form id="menuForm">
+                        <input type="hidden" id="menuId">
+                        <div class="form-group"><label>菜单名称</label><input type="text" class="form-control" id="menuName" required></div>
+                        <div class="form-group"><label>菜单编码</label><input type="text" class="form-control" id="menuCode" required></div>
+                        <div class="form-group"><label>上级菜单</label><select class="form-control" id="menuParentId"><option value="0">顶级菜单</option></select></div>
+                        <div class="form-group"><label>URL</label><input type="text" class="form-control" id="menuUrl"></div>
+                        <div class="form-group"><label>图标</label><input type="text" class="form-control" id="menuIcon"></div>
+                        <div class="form-group"><label>类型</label>
+                            <select class="form-control" id="menuType">
+                                <option value="1">目录</option>
+                                <option value="2">菜单</option>
+                                <option value="3">按钮</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>排序</label><input type="number" class="form-control" id="menuSort" value="1"></div>
+                        <div class="form-group"><label>状态</label>
+                            <select class="form-control" id="menuStatus">
+                                <option value="1">启用</option>
+                                <option value="0">禁用</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveMenu()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+    <script>
+        var allMenus = [];
+        var allRoles = [];
+        
+        function loadList(type) {
+            $.get('/api/' + type + '/list', function(res) {
+                var tbody = $('#' + type + 'TableBody');
+                tbody.empty();
+                res.data.forEach(function(item) {
+                    var statusText = item.status === 1 ? '<span class="label label-success">启用</span>' : '<span class="label label-danger">禁用</span>';
+                    var tr = '<tr>';
+                    if (type === 'user') {
+                        var roleNames = '-';
+                        if (item.roleIds && item.roleIds.length > 0) {
+                            var names = [];
+                            item.roleIds.forEach(function(rid) {
+                                var role = allRoles.find(function(r) { return r.id === rid; });
+                                if (role) names.push(role.roleName);
+                            });
+                            roleNames = names.length > 0 ? names.join(', ') : '-';
+                        }
+                        tr += '<td>' + item.id + '</td><td>' + item.username + '</td><td>' + item.name + '</td><td>' + (item.email || '-') + '</td><td>' + (item.phone || '-') + '</td><td>' + roleNames + '</td><td>' + statusText + '</td>';
+                    } else if (type === 'role') {
+                        var menuNames = '-';
+                        if (item.menuIds && item.menuIds.length > 0) {
+                            var names = [];
+                            item.menuIds.forEach(function(mid) {
+                                var menu = allMenus.find(function(m) { return m.id === mid; });
+                                if (menu) names.push(menu.menuName);
+                            });
+                            menuNames = names.length > 0 ? names.join(', ') : '-';
+                        }
+                        tr += '<td>' + item.id + '</td><td>' + item.roleName + '</td><td>' + item.roleCode + '</td><td>' + (item.description || '-') + '</td><td>' + menuNames + '</td><td>' + statusText + '</td>';
+                    } else if (type === 'org') {
+                        tr += '<td>' + item.id + '</td><td>' + item.orgName + '</td><td>' + item.orgCode + '</td><td>' + (item.parentId || '顶级') + '</td><td>' + item.sort + '</td><td>' + statusText + '</td>';
+                    } else if (type === 'menu') {
+                        var typeText = item.menuType === 1 ? '目录' : (item.menuType === 2 ? '菜单' : '按钮');
+                        tr += '<td>' + item.id + '</td><td>' + item.menuName + '</td><td>' + item.menuCode + '</td><td>' + (item.menuUrl || '-') + '</td><td>' + typeText + '</td><td>' + item.sort + '</td><td>' + statusText + '</td>';
+                    }
+                    tr += '<td><button class="btn btn-sm btn-info" onclick="edit' + type.charAt(0).toUpperCase() + type.slice(1) + '(' + item.id + ')">编辑</button> <button class="btn btn-sm btn-danger" onclick="delete' + type.charAt(0).toUpperCase() + type.slice(1) + '(' + item.id + ')">删除</button></td></tr>';
+                    tbody.append(tr);
+                });
+            });
+        }
+        
+        function loadSelectOptions() {
+            $.get('/api/org/list', function(res) {
+                var options = '<option value="">请选择</option>';
+                res.data.forEach(function(item) { options += '<option value="' + item.id + '">' + item.orgName + '</option>'; });
+                $('#userOrgId').html(options);
+                $('#orgParentId').html('<option value="0">顶级机构</option>' + options);
+            });
+            $.get('/api/role/list', function(res) {
+                allRoles = res.data;
+                var options = '';
+                res.data.forEach(function(item) { options += '<option value="' + item.id + '">' + item.roleName + '</option>'; });
+                $('#userRoleIds').html(options);
+            });
+            $.get('/api/menu/list', function(res) {
+                allMenus = res.data;
+                var options = '';
+                var parentMenus = res.data.filter(function(m) { return m.menuType === 1; });
+                var childMenus = res.data.filter(function(m) { return m.menuType === 2 || m.menuType === 3; });
+                
+                parentMenus.forEach(function(parent) {
+                    options += '<option value="' + parent.id + '">【目录】' + parent.menuName + '</option>';
+                    childMenus.filter(function(c) { return c.parentId === parent.id; }).forEach(function(child) {
+                        var prefix = child.menuType === 2 ? '　├ ' : '　　◇ ';
+                        options += '<option value="' + child.id + '">' + prefix + child.menuName + '</option>';
+                    });
+                });
+                $('#roleMenuIds').html(options);
+                
+                var parentOptions = '<option value="0">顶级菜单</option>';
+                parentMenus.forEach(function(item) { 
+                    parentOptions += '<option value="' + item.id + '">' + item.menuName + '</option>'; 
+                });
+                $('#menuParentId').html(parentOptions);
+            });
+        }
+        
+        function openUserModal() { $('#userId').val(''); $('#userForm')[0].reset(); $('#userModal').modal('show'); }
+        function openRoleModal() { $('#roleId').val(''); $('#roleForm')[0].reset(); $('#roleModal').modal('show'); }
+        function openOrgModal() { $('#orgId').val(''); $('#orgForm')[0].reset(); $('#orgModal').modal('show'); }
+        function openMenuModal() { $('#menuId').val(''); $('#menuForm')[0].reset(); $('#menuModal').modal('show'); }
+        
+        function editUser(id) {
+            $.get('/api/user/' + id, function(res) {
+                var user = res.data;
+                $('#userId').val(user.id);
+                $('#userUsername').val(user.username);
+                $('#userName').val(user.name);
+                $('#userEmail').val(user.email);
+                $('#userPhone').val(user.phone);
+                $('#userOrgId').val(user.orgId);
+                $('#userStatus').val(user.status);
+                if (user.roleIds && user.roleIds.length > 0) {
+                    $('#userRoleIds').val(user.roleIds.map(function(id) { return String(id); }));
+                }
+                $('#userModal').modal('show');
+            });
+        }
+        
+        function editRole(id) {
+            $.get('/api/role/' + id, function(res) {
+                var role = res.data;
+                $('#roleId').val(role.id);
+                $('#roleName').val(role.roleName);
+                $('#roleCode').val(role.roleCode);
+                $('#roleDesc').val(role.description);
+                $('#roleStatus').val(role.status);
+                if (role.menuIds && role.menuIds.length > 0) {
+                    $('#roleMenuIds').val(role.menuIds.map(function(id) { return String(id); }));
+                }
+                $('#roleModal').modal('show');
+            });
+        }
+        
+        function editOrg(id) {
+            $.get('/api/org/' + id, function(res) {
+                var org = res.data;
+                $('#orgId').val(org.id);
+                $('#orgName').val(org.orgName);
+                $('#orgCode').val(org.orgCode);
+                $('#orgParentId').val(org.parentId);
+                $('#orgSort').val(org.sort);
+                $('#orgDesc').val(org.description);
+                $('#orgStatus').val(org.status);
+                $('#orgModal').modal('show');
+            });
+        }
+        
+        function editMenu(id) {
+            $.get('/api/menu/' + id, function(res) {
+                var menu = res.data;
+                $('#menuId').val(menu.id);
+                $('#menuName').val(menu.menuName);
+                $('#menuCode').val(menu.menuCode);
+                $('#menuParentId').val(menu.parentId);
+                $('#menuUrl').val(menu.menuUrl);
+                $('#menuIcon').val(menu.menuIcon);
+                $('#menuType').val(menu.menuType);
+                $('#menuSort').val(menu.sort);
+                $('#menuStatus').val(menu.status);
+                $('#menuModal').modal('show');
+            });
+        }
+        
+        function saveUser() {
+            var roleIds = $('#userRoleIds').val() || [];
+            roleIds = roleIds.map(function(id) { return parseInt(id); });
+            var data = {
+                id: $('#userId').val() || null,
+                username: $('#userUsername').val(),
+                password: $('#userPassword').val(),
+                name: $('#userName').val(),
+                email: $('#userEmail').val(),
+                phone: $('#userPhone').val(),
+                orgId: $('#userOrgId').val() || null,
+                roleIds: roleIds,
+                status: parseInt($('#userStatus').val())
+            };
+            $.ajax({
+                url: '/api/user/save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(res) {
+                    if (res.code === 200) { $('#userModal').modal('hide'); loadList('user'); }
+                    else { alert(res.message); }
+                }
+            });
+        }
+        
+        function saveRole() {
+            var menuIds = $('#roleMenuIds').val() || [];
+            menuIds = menuIds.map(function(id) { return parseInt(id); });
+            var data = {
+                id: $('#roleId').val() || null,
+                roleName: $('#roleName').val(),
+                roleCode: $('#roleCode').val(),
+                description: $('#roleDesc').val(),
+                menuIds: menuIds,
+                status: parseInt($('#roleStatus').val())
+            };
+            $.ajax({
+                url: '/api/role/save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(res) {
+                    if (res.code === 200) { $('#roleModal').modal('hide'); loadList('role'); }
+                    else { alert(res.message); }
+                }
+            });
+        }
+        
+        function saveOrg() {
+            var data = {
+                id: $('#orgId').val() || null,
+                orgName: $('#orgName').val(),
+                orgCode: $('#orgCode').val(),
+                parentId: parseInt($('#orgParentId').val()) || 0,
+                sort: parseInt($('#orgSort').val()),
+                description: $('#orgDesc').val(),
+                status: parseInt($('#orgStatus').val())
+            };
+            $.ajax({
+                url: '/api/org/save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(res) {
+                    if (res.code === 200) { $('#orgModal').modal('hide'); loadList('org'); loadSelectOptions(); }
+                    else { alert(res.message); }
+                }
+            });
+        }
+        
+        function saveMenu() {
+            var data = {
+                id: $('#menuId').val() || null,
+                menuName: $('#menuName').val(),
+                menuCode: $('#menuCode').val(),
+                parentId: parseInt($('#menuParentId').val()) || 0,
+                menuUrl: $('#menuUrl').val(),
+                menuIcon: $('#menuIcon').val(),
+                menuType: parseInt($('#menuType').val()),
+                sort: parseInt($('#menuSort').val()),
+                status: parseInt($('#menuStatus').val())
+            };
+            $.ajax({
+                url: '/api/menu/save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(res) {
+                    if (res.code === 200) { $('#menuModal').modal('hide'); loadList('menu'); loadSelectOptions(); }
+                    else { alert(res.message); }
+                }
+            });
+        }
+        
+        function deleteUser(id) { if (confirm('确定删除？')) { $.ajax({ url: '/api/user/' + id, type: 'DELETE', success: function() { loadList('user'); } }); } }
+        function deleteRole(id) { if (confirm('确定删除？')) { $.ajax({ url: '/api/role/' + id, type: 'DELETE', success: function() { loadList('role'); } }); } }
+        function deleteOrg(id) { if (confirm('确定删除？')) { $.ajax({ url: '/api/org/' + id, type: 'DELETE', success: function() { loadList('org'); } }); } }
+        function deleteMenu(id) { if (confirm('确定删除？')) { $.ajax({ url: '/api/menu/' + id, type: 'DELETE', success: function() { loadList('menu'); } }); } }
+        
+        var menuCodeMap = {
+            'user': '用户管理',
+            'role': '角色管理',
+            'org': '组织机构',
+            'menu': '菜单管理'
+        };
+        
+        var contentTypes = ['user', 'role', 'org', 'menu'];
+        
+        function loadUserMenus() {
+            $.get('/api/menu/user', function(res) {
+                if (res.code === 200) {
+                    renderMenus(res.data);
+                }
+            });
+        }
+        
+        function renderMenus(menus) {
+            var $menu = $('#sidebarMenu');
+            $menu.empty();
+            
+            var parentMenus = menus.filter(function(m) { return m.menuType === 1; });
+            var childMenus = menus.filter(function(m) { return m.menuType === 2; });
+            
+            parentMenus.forEach(function(parent) {
+                var children = childMenus.filter(function(c) { return c.parentId === parent.id; });
+                if (children.length > 0) {
+                    children.forEach(function(child, index) {
+                        var code = child.menuCode;
+                        var isActive = index === 0 ? 'active' : '';
+                        var icon = child.menuIcon || 'fa-circle';
+                        var li = '<li class="' + isActive + '"><a href="#" onclick="showContent(\'' + code + '\')"><i class="fa ' + icon + '"></i> ' + child.menuName + '</a></li>';
+                        $menu.append(li);
+                    });
+                }
+            });
+            
+            var firstCode = null;
+            for (var i = 0; i < contentTypes.length; i++) {
+                var type = contentTypes[i];
+                var hasMenu = menus.some(function(m) { return m.menuCode === type && m.menuType === 2; });
+                if (hasMenu) {
+                    firstCode = type;
+                    break;
+                }
+            }
+            
+            if (firstCode) {
+                showContent(firstCode);
+            }
+        }
+        
+        function showContent(type) {
+            $('.sidebar-menu li').removeClass('active');
+            $('.sidebar-menu li a').each(function() {
+                if ($(this).attr('onclick') && $(this).attr('onclick').indexOf("'" + type + "'") > -1) {
+                    $(this).parent().addClass('active');
+                }
+            });
+            $('.content-box').removeClass('active');
+            $('#' + type + 'Content').addClass('active');
+            loadList(type);
+        }
+        
+        $(function() { 
+            loadSelectOptions(); 
+            loadUserMenus();
+        });
+    </script>
+</body>
+</html>

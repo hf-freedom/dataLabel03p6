@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>个人中心 - 数据标注管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <style>
+        body { padding-top: 0; background: #f5f5f5; }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background: #2c3e50;
+            padding-top: 60px;
+        }
+        .sidebar-header {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 60px;
+            background: #1a252f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-menu > li > a {
+            display: block;
+            padding: 15px 20px;
+            color: #b8c7ce;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-menu > li > a:hover,
+        .sidebar-menu > li.active > a {
+            background: #1a252f;
+            color: white;
+            border-left-color: #667eea;
+        }
+        .sidebar-menu > li > a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        .main-content {
+            margin-left: 220px;
+            padding: 20px;
+        }
+        .content-box {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .content-box.active { display: block; }
+        .user-info {
+            float: right;
+            line-height: 60px;
+            color: #666;
+        }
+        .user-info a { margin-left: 15px; }
+        .panel-heading { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .form-horizontal .form-group { margin-bottom: 20px; }
+        .btn-save { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; }
+        .btn-save:hover { background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%); }
+        .table { margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="sidebar-header">数据标注管理系统</div>
+    <div class="sidebar">
+        <ul class="sidebar-menu" id="sidebarMenu">
+        </ul>
+    </div>
+    
+    <div class="main-content">
+        <div class="content-header" style="background: white; padding: 15px 20px; margin-bottom: 20px; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <span class="user-info">
+                欢迎，<span th:text="${user.name}"></span>
+                <a href="/logout"><i class="fa fa-sign-out"></i> 退出</a>
+            </span>
+        </div>
+        
+        <div id="profileContent" class="content-box active">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">个人信息</h3>
+                </div>
+                <div class="panel-body">
+                    <form class="form-horizontal" id="profileForm">
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">用户名</label>
+                            <div class="col-sm-9"><p class="form-control-static" id="username"></p></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">姓名</label>
+                            <div class="col-sm-9"><input type="text" class="form-control" id="name"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">邮箱</label>
+                            <div class="col-sm-9"><input type="email" class="form-control" id="email"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">电话</label>
+                            <div class="col-sm-9"><input type="text" class="form-control" id="phone"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-3 control-label">新密码</label>
+                            <div class="col-sm-9"><input type="password" class="form-control" id="newPassword" placeholder="不修改请留空"></div>
+                        </div>
+                        <div class="form-group">
+                            <div class="col-sm-offset-3 col-sm-9">
+                                <button type="button" class="btn btn-primary btn-save" onclick="saveProfile()">保存修改</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div id="userContent" class="content-box">
+            <h4>用户管理</h4>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>用户名</th>
+                        <th>姓名</th>
+                        <th>邮箱</th>
+                        <th>电话</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody"></tbody>
+            </table>
+        </div>
+        
+        <div id="roleContent" class="content-box">
+            <h4>角色管理</h4>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>角色名称</th>
+                        <th>角色编码</th>
+                        <th>描述</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody id="roleTableBody"></tbody>
+            </table>
+        </div>
+        
+        <div id="orgContent" class="content-box">
+            <h4>组织机构管理</h4>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>机构名称</th>
+                        <th>机构编码</th>
+                        <th>上级机构</th>
+                        <th>排序</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody id="orgTableBody"></tbody>
+            </table>
+        </div>
+        
+        <div id="menuContent" class="content-box">
+            <h4>菜单管理</h4>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>菜单名称</th>
+                        <th>菜单编码</th>
+                        <th>URL</th>
+                        <th>类型</th>
+                        <th>排序</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody id="menuTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+    <script>
+        var allMenus = [];
+        var allRoles = [];
+        
+        $(function() {
+            loadProfile();
+            loadUserMenus();
+            loadSelectOptions();
+        });
+        
+        function loadProfile() {
+            $.get('/api/user/profile', function(res) {
+                if (res.code === 200) {
+                    var user = res.data;
+                    $('#username').text(user.username);
+                    $('#name').val(user.name);
+                    $('#email').val(user.email);
+                    $('#phone').val(user.phone);
+                }
+            });
+        }
+        
+        function loadUserMenus() {
+            $.get('/api/menu/user', function(res) {
+                if (res.code === 200) {
+                    allMenus = res.data;
+                    renderMenus(res.data);
+                }
+            });
+        }
+        
+        function loadSelectOptions() {
+            $.get('/api/role/list', function(res) {
+                allRoles = res.data;
+            });
+        }
+        
+        function renderMenus(menus) {
+            var $menu = $('#sidebarMenu');
+            $menu.empty();
+            
+            var parentMenus = menus.filter(function(m) { return m.menuType === 1; });
+            var childMenus = menus.filter(function(m) { return m.menuType === 2; });
+            
+            var firstCode = 'profile';
+            parentMenus.forEach(function(parent) {
+                var children = childMenus.filter(function(c) { return c.parentId === parent.id; });
+                if (children.length > 0) {
+                    children.forEach(function(child, index) {
+                        var icon = child.menuIcon || 'fa-circle';
+                        var isActive = index === 0 ? 'active' : '';
+                        if (index === 0) firstCode = child.menuCode;
+                        var li = '<li class="' + isActive + '"><a href="#" onclick="showContent(\'' + child.menuCode + '\')"><i class="fa ' + icon + '"></i> ' + child.menuName + '</a></li>';
+                        $menu.append(li);
+                    });
+                }
+            });
+            
+            if (firstCode !== 'profile') {
+                showContent(firstCode);
+            }
+        }
+        
+        function showContent(code) {
+            $('.sidebar-menu li').removeClass('active');
+            $('.sidebar-menu li a').each(function() {
+                if ($(this).attr('onclick') && $(this).attr('onclick').indexOf("'" + code + "'") > -1) {
+                    $(this).parent().addClass('active');
+                }
+            });
+            $('.content-box').removeClass('active');
+            $('#' + code + 'Content').addClass('active');
+            loadList(code);
+        }
+        
+        function loadList(type) {
+            if (type === 'profile') return;
+            
+            $.get('/api/' + type + '/list', function(res) {
+                var tbody = $('#' + type + 'TableBody');
+                tbody.empty();
+                res.data.forEach(function(item) {
+                    var statusText = item.status === 1 ? '<span class="label label-success">启用</span>' : '<span class="label label-danger">禁用</span>';
+                    var tr = '<tr>';
+                    if (type === 'user') {
+                        tr += '<td>' + item.id + '</td><td>' + item.username + '</td><td>' + item.name + '</td><td>' + (item.email || '-') + '</td><td>' + (item.phone || '-') + '</td><td>' + statusText + '</td>';
+                    } else if (type === 'role') {
+                        tr += '<td>' + item.id + '</td><td>' + item.roleName + '</td><td>' + item.roleCode + '</td><td>' + (item.description || '-') + '</td><td>' + statusText + '</td>';
+                    } else if (type === 'org') {
+                        tr += '<td>' + item.id + '</td><td>' + item.orgName + '</td><td>' + item.orgCode + '</td><td>' + (item.parentId || '顶级') + '</td><td>' + item.sort + '</td><td>' + statusText + '</td>';
+                    } else if (type === 'menu') {
+                        var typeText = item.menuType === 1 ? '目录' : (item.menuType === 2 ? '菜单' : '按钮');
+                        tr += '<td>' + item.id + '</td><td>' + item.menuName + '</td><td>' + item.menuCode + '</td><td>' + (item.menuUrl || '-') + '</td><td>' + typeText + '</td><td>' + item.sort + '</td><td>' + statusText + '</td>';
+                    }
+                    tr += '</tr>';
+                    tbody.append(tr);
+                });
+            });
+        }
+        
+        function saveProfile() {
+            var data = {
+                name: $('#name').val(),
+                email: $('#email').val(),
+                phone: $('#phone').val()
+            };
+            var newPwd = $('#newPassword').val();
+            if (newPwd) { data.password = newPwd; }
+            
+            $.ajax({
+                url: '/api/user/updateProfile',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(res) {
+                    if (res.code === 200) {
+                        alert('保存成功');
+                        $('#newPassword').val('');
+                    } else {
+                        alert(res.message);
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
