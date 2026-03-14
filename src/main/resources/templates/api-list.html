@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>API管理 - 数据标注管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <style>
+        body { padding-top: 0; }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background: #2c3e50;
+            padding-top: 60px;
+        }
+        .sidebar-header {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 60px;
+            background: #1a252f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-menu > li > a {
+            display: block;
+            padding: 15px 20px;
+            color: #b8c7ce;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-menu > li > a:hover,
+        .sidebar-menu > li.active > a {
+            background: #1a252f;
+            color: white;
+            border-left-color: #667eea;
+        }
+        .sidebar-menu > li > a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        .main-content {
+            margin-left: 220px;
+            padding: 20px;
+        }
+        .content-header {
+            background: white;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .content-box {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .user-info {
+            float: right;
+            line-height: 60px;
+            color: #666;
+        }
+        .user-info a { margin-left: 15px; }
+        .table { margin-top: 15px; }
+        .modal-body .form-group { margin-bottom: 15px; }
+        .badge-method {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge-get { background-color: #5cb85c; color: white; }
+        .badge-post { background-color: #337ab7; color: white; }
+        .badge-put { background-color: #f0ad4e; color: white; }
+        .badge-delete { background-color: #d9534f; color: white; }
+    </style>
+</head>
+<body>
+    <div class="sidebar-header">数据标注管理系统</div>
+    <div class="sidebar">
+        <ul class="sidebar-menu" id="sidebarMenu">
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <span class="user-info">
+                欢迎，<span th:text="${user != null ? user.name : '管理员'}"></span>
+                <a href="/logout"><i class="fa fa-sign-out"></i> 退出</a>
+            </span>
+            <h4 style="margin: 0;">API管理</h4>
+        </div>
+
+        <div class="content-box">
+            <button class="btn btn-primary" onclick="openApiModal()">
+                <i class="fa fa-plus"></i> 新增API
+            </button>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>API名称</th>
+                        <th>API URL</th>
+                        <th>请求方法</th>
+                        <th>控制器类</th>
+                        <th>控制器方法</th>
+                        <th>描述</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="apiTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- API模态框 -->
+    <div class="modal fade" id="apiModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">API信息</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="apiForm">
+                        <input type="hidden" id="apiId">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>API名称</label>
+                                    <input type="text" class="form-control" id="apiName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>API URL</label>
+                                    <input type="text" class="form-control" id="apiUrl" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>请求方法</label>
+                                    <select class="form-control" id="apiMethod">
+                                        <option value="GET">GET</option>
+                                        <option value="POST">POST</option>
+                                        <option value="PUT">PUT</option>
+                                        <option value="DELETE">DELETE</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>状态</label>
+                                    <select class="form-control" id="apiStatus">
+                                        <option value="1">启用</option>
+                                        <option value="0">禁用</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>控制器类</label>
+                                    <input type="text" class="form-control" id="controllerClass">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>控制器方法</label>
+                                    <input type="text" class="form-control" id="controllerMethod">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>描述</label>
+                            <textarea class="form-control" id="apiDescription" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveApi()">保存</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+    <script>
+        function loadApis() {
+            $.get('/api/info/list', function(res) {
+                if (res.code === 200) {
+                    var tbody = $('#apiTableBody');
+                    tbody.empty();
+                    res.data.forEach(function(item) {
+                        var methodClass = 'badge-get';
+                        if (item.apiMethod === 'POST') methodClass = 'badge-post';
+                        else if (item.apiMethod === 'PUT') methodClass = 'badge-put';
+                        else if (item.apiMethod === 'DELETE') methodClass = 'badge-delete';
+
+                        var statusText = item.status === 1 ?
+                            '<span class="label label-success">启用</span>' :
+                            '<span class="label label-danger">禁用</span>';
+
+                        var tr = '<tr>' +
+                            '<td>' + item.id + '</td>' +
+                            '<td>' + item.apiName + '</td>' +
+                            '<td>' + item.apiUrl + '</td>' +
+                            '<td><span class="badge-method ' + methodClass + '">' + item.apiMethod + '</span></td>' +
+                            '<td>' + (item.controllerClass || '-') + '</td>' +
+                            '<td>' + (item.controllerMethod || '-') + '</td>' +
+                            '<td>' + (item.description || '-') + '</td>' +
+                            '<td>' + statusText + '</td>' +
+                            '<td>' +
+                            '<button class="btn btn-sm btn-info" onclick="editApi(' + item.id + ')">编辑</button> ' +
+                            '<button class="btn btn-sm btn-danger" onclick="deleteApi(' + item.id + ')">删除</button>' +
+                            '</td>' +
+                            '</tr>';
+                        tbody.append(tr);
+                    });
+                } else if (res.code === 403) {
+                    alert('权限不足');
+                }
+            }).fail(function(xhr) {
+                if (xhr.status === 403) {
+                    alert('权限不足');
+                }
+            });
+        }
+
+        function openApiModal() {
+            $('#apiId').val('');
+            $('#apiForm')[0].reset();
+            $('#apiModal').modal('show');
+        }
+
+        function editApi(id) {
+            $.get('/api/info/' + id, function(res) {
+                if (res.code === 200 && res.data) {
+                    var api = res.data;
+                    $('#apiId').val(api.id);
+                    $('#apiName').val(api.apiName);
+                    $('#apiUrl').val(api.apiUrl);
+                    $('#apiMethod').val(api.apiMethod);
+                    $('#controllerClass').val(api.controllerClass);
+                    $('#controllerMethod').val(api.controllerMethod);
+                    $('#apiDescription').val(api.description);
+                    $('#apiStatus').val(api.status);
+                    $('#apiModal').modal('show');
+                } else {
+                    alert('获取API信息失败');
+                }
+            });
+        }
+
+        function saveApi() {
+            var data = {
+                id: $('#apiId').val() || null,
+                apiName: $('#apiName').val(),
+                apiUrl: $('#apiUrl').val(),
+                apiMethod: $('#apiMethod').val(),
+                controllerClass: $('#controllerClass').val(),
+                controllerMethod: $('#controllerMethod').val(),
+                description: $('#apiDescription').val(),
+                status: parseInt($('#apiStatus').val())
+            };
+
+            $.ajax({
+                url: '/api/info/save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(data),
+                success: function(res) {
+                    if (res.code === 200) {
+                        $('#apiModal').modal('hide');
+                        loadApis();
+                    } else {
+                        alert(res.message || '保存失败');
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 403) {
+                        alert('权限不足');
+                    } else {
+                        alert('保存失败');
+                    }
+                }
+            });
+        }
+
+        function deleteApi(id) {
+            if (!confirm('确定要删除这个API吗？')) {
+                return;
+            }
+
+            $.ajax({
+                url: '/api/info/' + id,
+                type: 'DELETE',
+                success: function(res) {
+                    if (res.code === 200) {
+                        loadApis();
+                    } else {
+                        alert(res.message || '删除失败');
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 403) {
+                        alert('权限不足');
+                    } else {
+                        alert('删除失败');
+                    }
+                }
+            });
+        }
+
+        function loadUserMenus() {
+            $.get('/api/menu/user', function(res) {
+                if (res.code === 200) {
+                    renderMenus(res.data);
+                }
+            });
+        }
+
+        function renderMenus(menus) {
+            var $menu = $('#sidebarMenu');
+            $menu.empty();
+
+            var parentMenus = menus.filter(function(m) { return m.menuType === 1; });
+            var childMenus = menus.filter(function(m) { return m.menuType === 2; });
+
+            parentMenus.forEach(function(parent) {
+                var children = childMenus.filter(function(c) { return c.parentId === parent.id; });
+                if (children.length > 0) {
+                    children.forEach(function(child) {
+                        var isActive = child.menuCode === 'api' ? 'active' : '';
+                        var icon = child.menuIcon || 'fa-circle';
+                        var li = '<li class="' + isActive + '"><a href="' + (child.menuUrl || '#') + '"><i class="fa ' + icon + '"></i> ' + child.menuName + '</a></li>';
+                        $menu.append(li);
+                    });
+                }
+            });
+        }
+
+        $(function() {
+            loadUserMenus();
+            loadApis();
+        });
+    </script>
+</body>
+</html>

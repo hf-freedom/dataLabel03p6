@@ -1,6 +1,7 @@
 package com.example.datalabel.controller;
 
-import com.example.datalabel.common.Result;
+import com.example.datalabel.annotation.SIRequirePermission;
+import com.example.datalabel.common.SIResult;
 import com.example.datalabel.entity.Role;
 import com.example.datalabel.service.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,27 +12,31 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/role")
 public class RoleController {
-    
+
     @Autowired
     private RoleService roleService;
-    
+
     @GetMapping("/list")
-    public Result<List<Role>> list() {
-        return Result.success(roleService.getAll());
+    @SIRequirePermission("role:list")
+    public SIResult<List<Role>> list() {
+        return SIResult.success(roleService.getAll());
     }
-    
+
     @GetMapping("/{id}")
-    public Result<Role> getById(@PathVariable Long id) {
-        return Result.success(roleService.getById(id));
+    @SIRequirePermission("role:view")
+    public SIResult<Role> getById(@PathVariable Long id) {
+        return SIResult.success(roleService.getById(id));
     }
-    
+
     @PostMapping("/save")
-    public Result<Boolean> save(@RequestBody Role role) {
-        return Result.success(roleService.save(role));
+    @SIRequirePermission("role:save")
+    public SIResult<Boolean> save(@RequestBody Role role) {
+        return SIResult.success(roleService.save(role));
     }
-    
+
     @DeleteMapping("/{id}")
-    public Result<Boolean> delete(@PathVariable Long id) {
-        return Result.success(roleService.delete(id));
+    @SIRequirePermission("role:delete")
+    public SIResult<Boolean> delete(@PathVariable Long id) {
+        return SIResult.success(roleService.delete(id));
     }
 }

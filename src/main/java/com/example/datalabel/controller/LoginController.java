@@ -1,6 +1,6 @@
 package com.example.datalabel.controller;
 
-import com.example.datalabel.common.Result;
+import com.example.datalabel.common.SIResult;
 import com.example.datalabel.entity.Menu;
 import com.example.datalabel.entity.Role;
 import com.example.datalabel.entity.User;
@@ -50,12 +50,12 @@ public class LoginController {
     
     @PostMapping("/login")
     @ResponseBody
-    public Result<Map<String, Object>> login(@RequestParam String username,
+    public SIResult<Map<String, Object>> login(@RequestParam String username,
                                               @RequestParam String password,
                                               @RequestParam String loginType,
                                               HttpSession session) {
         Map<String, Object> result = new HashMap<>();
-        
+
         if ("admin".equals(loginType)) {
             if (adminUsername.equals(username) && adminPassword.equals(password)) {
                 User admin = new User();
@@ -67,23 +67,23 @@ public class LoginController {
                 session.setAttribute("isAdmin", true);
                 result.put("isAdmin", true);
                 result.put("user", admin);
-                return Result.success(result);
+                return SIResult.success(result);
             } else {
-                return Result.error("管理员账号或密码错误");
+                return SIResult.error("管理员账号或密码错误");
             }
         } else {
             User user = userService.login(username, password);
             if (user != null) {
                 if (user.getStatus() != 1) {
-                    return Result.error("账号已被禁用");
+                    return SIResult.error("账号已被禁用");
                 }
                 session.setAttribute("user", user);
                 session.setAttribute("isAdmin", false);
                 result.put("isAdmin", false);
                 result.put("user", user);
-                return Result.success(result);
+                return SIResult.success(result);
             } else {
-                return Result.error("用户名或密码错误");
+                return SIResult.error("用户名或密码错误");
             }
         }
     }
@@ -158,7 +158,7 @@ public class LoginController {
     
     @GetMapping("/api/menu/user")
     @ResponseBody
-    public Result<List<Menu>> getUserMenus(HttpSession session) {
+    public SIResult<List<Menu>> getUserMenus(HttpSession session) {
         @SuppressWarnings("unchecked")
         List<Menu> menus = (List<Menu>) session.getAttribute("menus");
         if (menus == null) {
@@ -167,6 +167,6 @@ public class LoginController {
             menus = getUserMenus(user, isAdmin);
             session.setAttribute("menus", menus);
         }
-        return Result.success(menus);
+        return SIResult.success(menus);
     }
 }
