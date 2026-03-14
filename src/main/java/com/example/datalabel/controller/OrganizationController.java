@@ -1,6 +1,7 @@
 package com.example.datalabel.controller;
 
 import com.example.datalabel.common.Result;
+import com.example.datalabel.common.annotation.SIRequiredPermission;
 import com.example.datalabel.entity.Organization;
 import com.example.datalabel.service.OrganizationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@SIRequiredPermission
 @RestController
 @RequestMapping("/api/org")
 public class OrganizationController {

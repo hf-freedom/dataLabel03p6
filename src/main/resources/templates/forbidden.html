@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>权限不足</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .forbidden-container {
+            text-align: center;
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .forbidden-code {
+            font-size: 100px;
+            color: #e74c3c;
+            margin: 0;
+        }
+        .forbidden-message {
+            font-size: 24px;
+            color: #333;
+            margin: 20px 0;
+        }
+        .forbidden-desc {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .back-button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="forbidden-container">
+        <h1 class="forbidden-code">403</h1>
+        <p class="forbidden-message">权限不足</p>
+        <p class="forbidden-desc">抱歉，您没有权限访问此资源</p>
+        <a href="/main" class="back-button">返回首页</a>
+    </div>
+</body>
+</html>
