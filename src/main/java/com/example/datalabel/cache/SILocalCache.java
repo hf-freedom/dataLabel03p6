@@ -3,6 +3,7 @@ package com.example.datalabel.cache;
 import com.example.datalabel.entity.Menu;
 import com.example.datalabel.entity.Organization;
 import com.example.datalabel.entity.Role;
+import com.example.datalabel.entity.SIApiInfo;
 import com.example.datalabel.entity.User;
 import org.springframework.stereotype.Component;
 
@@ -12,23 +13,33 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Component
-public class LocalCache {
+public class SILocalCache {
     
     private final Map<Long, User> userCache = new ConcurrentHashMap<>();
     private final Map<Long, Role> roleCache = new ConcurrentHashMap<>();
     private final Map<Long, Organization> orgCache = new ConcurrentHashMap<>();
     private final Map<Long, Menu> menuCache = new ConcurrentHashMap<>();
+    private final Map<Long, SIApiInfo> apiCache = new ConcurrentHashMap<>();
+    private final Map<Long, Set<Long>> resourceApiCache = new ConcurrentHashMap<>();
     
     private final AtomicLong userIdGenerator = new AtomicLong(1);
     private final AtomicLong roleIdGenerator = new AtomicLong(1);
     private final AtomicLong orgIdGenerator = new AtomicLong(1);
     private final AtomicLong menuIdGenerator = new AtomicLong(1);
+    private final AtomicLong apiIdGenerator = new AtomicLong(1);
     
-    public LocalCache() {
+    public SILocalCache() {
         initDefaultData();
     }
     
     private void initDefaultData() {
+        initMenus();
+        initOrganization();
+        initRole();
+        initApis();
+    }
+    
+    private void initMenus() {
         Menu menu1 = new Menu();
         menu1.setId(menuIdGenerator.getAndIncrement());
         menu1.setMenuName("系统管理");
@@ -89,6 +100,20 @@ public class LocalCache {
         menu5.setStatus(1);
         menuCache.put(menu5.getId(), menu5);
         
+        Menu menu6 = new Menu();
+        menu6.setId(menuIdGenerator.getAndIncrement());
+        menu6.setMenuName("API管理");
+        menu6.setMenuCode("api");
+        menu6.setParentId(menu1.getId());
+        menu6.setMenuUrl("/api-manage");
+        menu6.setMenuIcon("fa-plug");
+        menu6.setMenuType(2);
+        menu6.setSort(5);
+        menu6.setStatus(1);
+        menuCache.put(menu6.getId(), menu6);
+    }
+    
+    private void initOrganization() {
         Organization org = new Organization();
         org.setId(orgIdGenerator.getAndIncrement());
         org.setOrgName("总公司");
@@ -97,15 +122,76 @@ public class LocalCache {
         org.setSort(1);
         org.setStatus(1);
         orgCache.put(org.getId(), org);
-        
+    }
+    
+    private void initRole() {
         Role role = new Role();
         role.setId(roleIdGenerator.getAndIncrement());
         role.setRoleName("普通用户");
         role.setRoleCode("user");
         role.setDescription("普通用户角色");
         role.setStatus(1);
-        role.setMenuIds(Arrays.asList(1L, 2L, 3L, 4L, 5L));
+        role.setMenuIds(Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L));
         roleCache.put(role.getId(), role);
+    }
+    
+    private void initApis() {
+        initApi("/api/user/list", "GET", "用户列表", "user");
+        initApi("/api/user/{id}", "GET", "获取用户", "user");
+        initApi("/api/user/save", "POST", "保存用户", "user");
+        initApi("/api/user/{id}", "DELETE", "删除用户", "user");
+        initApi("/api/user/updateProfile", "POST", "更新个人资料", "user", false);
+        initApi("/api/user/profile", "GET", "获取个人资料", "user", false);
+        
+        initApi("/api/role/list", "GET", "角色列表", "role");
+        initApi("/api/role/{id}", "GET", "获取角色", "role");
+        initApi("/api/role/save", "POST", "保存角色", "role");
+        initApi("/api/role/{id}", "DELETE", "删除角色", "role");
+        
+        initApi("/api/menu/list", "GET", "菜单列表", "menu");
+        initApi("/api/menu/tree", "GET", "菜单树", "menu");
+        initApi("/api/menu/{id}", "GET", "获取菜单", "menu");
+        initApi("/api/menu/save", "POST", "保存菜单", "menu");
+        initApi("/api/menu/{id}", "DELETE", "删除菜单", "menu");
+        initApi("/api/menu/user", "GET", "用户菜单", "menu", false);
+        
+        initApi("/api/org/list", "GET", "组织列表", "org");
+        initApi("/api/org/tree", "GET", "组织树", "org");
+        initApi("/api/org/{id}", "GET", "获取组织", "org");
+        initApi("/api/org/save", "POST", "保存组织", "org");
+        initApi("/api/org/{id}", "DELETE", "删除组织", "org");
+    }
+    
+    private void initApi(String path, String method, String name, String resourceCode) {
+        initApi(path, method, name, resourceCode, true);
+    }
+    
+    private void initApi(String path, String method, String name, String resourceCode, boolean requireAuth) {
+        SIApiInfo api = new SIApiInfo();
+        api.setId(apiIdGenerator.getAndIncrement());
+        api.setApiName(name);
+        api.setApiPath(path);
+        api.setApiMethod(method);
+        api.setDescription(name);
+        api.setResourceType("menu");
+        api.setRequireAuth(requireAuth ? 1 : 0);
+        api.setStatus(1);
+        
+        Long resourceId = getResourceIdByCode(resourceCode);
+        api.setResourceId(resourceId);
+        apiCache.put(api.getId(), api);
+        
+        if (resourceId != null) {
+            resourceApiCache.computeIfAbsent(resourceId, k -> new HashSet<>()).add(api.getId());
+        }
+    }
+    
+    private Long getResourceIdByCode(String code) {
+        return menuCache.values().stream()
+                .filter(m -> m.getMenuCode().equals(code))
+                .map(Menu::getId)
+                .findFirst()
+                .orElse(null);
     }
     
     public Long generateUserId() {
@@ -122,6 +208,10 @@ public class LocalCache {
     
     public Long generateMenuId() {
         return menuIdGenerator.getAndIncrement();
+    }
+    
+    public Long generateApiId() {
+        return apiIdGenerator.getAndIncrement();
     }
     
     public void putUser(User user) {
@@ -215,5 +305,57 @@ public class LocalCache {
         return menuCache.values().stream()
                 .filter(m -> Objects.equals(m.getParentId(), parentId))
                 .collect(Collectors.toList());
+    }
+    
+    public void putApi(SIApiInfo api) {
+        apiCache.put(api.getId(), api);
+    }
+    
+    public SIApiInfo getApi(Long id) {
+        return apiCache.get(id);
+    }
+    
+    public void removeApi(Long id) {
+        apiCache.remove(id);
+    }
+    
+    public List<SIApiInfo> getAllApis() {
+        return new ArrayList<>(apiCache.values());
+    }
+    
+    public SIApiInfo getApiByPathAndMethod(String path, String method) {
+        return apiCache.values().stream()
+                .filter(api -> api.getApiPath().equals(path) && api.getApiMethod().equalsIgnoreCase(method))
+                .findFirst()
+                .orElse(null);
+    }
+    
+    public List<SIApiInfo> getApisByResourceId(Long resourceId) {
+        Set<Long> apiIds = resourceApiCache.get(resourceId);
+        if (apiIds == null || apiIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return apiIds.stream()
+                .map(apiCache::get)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+    
+    public Set<Long> getApiIdsByResourceIds(List<Long> resourceIds) {
+        if (resourceIds == null || resourceIds.isEmpty()) {
+            return new HashSet<>();
+        }
+        Set<Long> apiIds = new HashSet<>();
+        for (Long resourceId : resourceIds) {
+            Set<Long> apis = resourceApiCache.get(resourceId);
+            if (apis != null) {
+                apiIds.addAll(apis);
+            }
+        }
+        return apiIds;
+    }
+    
+    public boolean isRootUser(Long userId) {
+        return userId != null && userId == 0L;
     }
 }

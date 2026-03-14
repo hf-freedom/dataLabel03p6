@@ -1,6 +1,7 @@
 package com.example.datalabel.controller;
 
-import com.example.datalabel.common.Result;
+import com.example.datalabel.common.SIApiPermission;
+import com.example.datalabel.common.SIResult;
 import com.example.datalabel.entity.User;
 import com.example.datalabel.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,30 +18,35 @@ public class UserController {
     private UserService userService;
     
     @GetMapping("/list")
-    public Result<List<User>> list() {
-        return Result.success(userService.getAll());
+    @SIApiPermission(name = "用户列表", resourceCode = "user")
+    public SIResult<List<User>> list() {
+        return SIResult.success(userService.getAll());
     }
     
     @GetMapping("/{id}")
-    public Result<User> getById(@PathVariable Long id) {
-        return Result.success(userService.getById(id));
+    @SIApiPermission(name = "获取用户", resourceCode = "user")
+    public SIResult<User> getById(@PathVariable Long id) {
+        return SIResult.success(userService.getById(id));
     }
     
     @PostMapping("/save")
-    public Result<Boolean> save(@RequestBody User user) {
-        return Result.success(userService.save(user));
+    @SIApiPermission(name = "保存用户", resourceCode = "user")
+    public SIResult<Boolean> save(@RequestBody User user) {
+        return SIResult.success(userService.save(user));
     }
     
     @DeleteMapping("/{id}")
-    public Result<Boolean> delete(@PathVariable Long id) {
-        return Result.success(userService.delete(id));
+    @SIApiPermission(name = "删除用户", resourceCode = "user")
+    public SIResult<Boolean> delete(@PathVariable Long id) {
+        return SIResult.success(userService.delete(id));
     }
     
     @PostMapping("/updateProfile")
-    public Result<Boolean> updateProfile(@RequestBody User user, HttpSession session) {
+    @SIApiPermission(name = "更新个人资料", resourceCode = "user", requireAuth = false)
+    public SIResult<Boolean> updateProfile(@RequestBody User user, HttpSession session) {
         User currentUser = (User) session.getAttribute("user");
         if (currentUser == null) {
-            return Result.error(401, "未登录");
+            return SIResult.error(401, "未登录");
         }
         user.setId(currentUser.getId());
         boolean result = userService.updateProfile(user);
@@ -48,15 +54,16 @@ public class UserController {
             User updatedUser = userService.getById(currentUser.getId());
             session.setAttribute("user", updatedUser);
         }
-        return Result.success(result);
+        return SIResult.success(result);
     }
     
     @GetMapping("/profile")
-    public Result<User> getProfile(HttpSession session) {
+    @SIApiPermission(name = "获取个人资料", resourceCode = "user", requireAuth = false)
+    public SIResult<User> getProfile(HttpSession session) {
         User user = (User) session.getAttribute("user");
         if (user == null) {
-            return Result.error(401, "未登录");
+            return SIResult.error(401, "未登录");
         }
-        return Result.success(user);
+        return SIResult.success(user);
     }
 }

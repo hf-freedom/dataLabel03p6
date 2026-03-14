@@ -1,6 +1,7 @@
 package com.example.datalabel.controller;
 
-import com.example.datalabel.common.Result;
+import com.example.datalabel.common.SIApiPermission;
+import com.example.datalabel.common.SIResult;
 import com.example.datalabel.entity.Role;
 import com.example.datalabel.service.RoleService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,22 +17,26 @@ public class RoleController {
     private RoleService roleService;
     
     @GetMapping("/list")
-    public Result<List<Role>> list() {
-        return Result.success(roleService.getAll());
+    @SIApiPermission(name = "角色列表", resourceCode = "role")
+    public SIResult<List<Role>> list() {
+        return SIResult.success(roleService.getAll());
     }
     
     @GetMapping("/{id}")
-    public Result<Role> getById(@PathVariable Long id) {
-        return Result.success(roleService.getById(id));
+    @SIApiPermission(name = "获取角色", resourceCode = "role")
+    public SIResult<Role> getById(@PathVariable Long id) {
+        return SIResult.success(roleService.getById(id));
     }
     
     @PostMapping("/save")
-    public Result<Boolean> save(@RequestBody Role role) {
-        return Result.success(roleService.save(role));
+    @SIApiPermission(name = "保存角色", resourceCode = "role")
+    public SIResult<Boolean> save(@RequestBody Role role) {
+        return SIResult.success(roleService.save(role));
     }
     
     @DeleteMapping("/{id}")
-    public Result<Boolean> delete(@PathVariable Long id) {
-        return Result.success(roleService.delete(id));
+    @SIApiPermission(name = "删除角色", resourceCode = "role")
+    public SIResult<Boolean> delete(@PathVariable Long id) {
+        return SIResult.success(roleService.delete(id));
     }
 }
