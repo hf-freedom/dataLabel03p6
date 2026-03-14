@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>API资源绑定 - 数据标注管理系统</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css">
+    <style>
+        body { padding-top: 0; }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 100vh;
+            background: #2c3e50;
+            padding-top: 60px;
+        }
+        .sidebar-header {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 220px;
+            height: 60px;
+            background: #1a252f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-menu > li > a {
+            display: block;
+            padding: 15px 20px;
+            color: #b8c7ce;
+            text-decoration: none;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-menu > li > a:hover,
+        .sidebar-menu > li.active > a {
+            background: #1a252f;
+            color: white;
+            border-left-color: #667eea;
+        }
+        .sidebar-menu > li > a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        .main-content {
+            margin-left: 220px;
+            padding: 20px;
+        }
+        .content-header {
+            background: white;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .content-box {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .user-info {
+            float: right;
+            line-height: 60px;
+            color: #666;
+        }
+        .user-info a { margin-left: 15px; }
+        .table { margin-top: 15px; }
+        .modal-body .form-group { margin-bottom: 15px; }
+        .api-info-box {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 3px solid #337ab7;
+        }
+        .api-name {
+            font-weight: bold;
+            color: #333;
+        }
+        .api-url {
+            color: #666;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .badge-method {
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 5px;
+        }
+        .badge-get { background-color: #5cb85c; color: white; }
+        .badge-post { background-color: #337ab7; color: white; }
+        .badge-put { background-color: #f0ad4e; color: white; }
+        .badge-delete { background-color: #d9534f; color: white; }
+    </style>
+</head>
+<body>
+    <div class="sidebar-header">数据标注管理系统</div>
+    <div class="sidebar">
+        <ul class="sidebar-menu" id="sidebarMenu">
+        </ul>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <span class="user-info">
+                欢迎，<span th:text="${user != null ? user.name : '管理员'}"></span>
+                <a href="/logout"><i class="fa fa-sign-out"></i> 退出</a>
+            </span>
+            <h4 style="margin: 0;">API资源绑定</h4>
+        </div>
+
+        <div class="content-box">
+            <button class="btn btn-primary" onclick="openResourceModal()">
+                <i class="fa fa-link"></i> 新增绑定
+            </button>
+            <table class="table table-bordered table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>API信息</th>
+                        <th>绑定资源（菜单）</th>
+                        <th>描述</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="resourceTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 新增绑定模态框 -->
+    <div class="modal fade" id="resourceModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">新增API资源绑定</h4>
+                </div>
+                <div class="modal-body">
+                    <form id="resourceForm">
+                        <div class="form-group">
+                            <label>选择API</label>
+                            <select class="form-control" id="apiId" required>
+                                <option value="">请选择API</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>绑定资源（菜单）</label>
+                            <select class="form-control" id="menuId" required>
+                                <option value="">请选择菜单</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>状态</label>
+                            <select class="form-control" id="resourceStatus">
+                                <option value="1">启用</option>
+                                <option value="0">禁用</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>描述</label>
+                            <textarea class="form-control" id="resourceDescription" rows="3" placeholder="请输入绑定描述"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" onclick="saveResource()">保存绑定</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+    <script>
+        var allApis = [];
+        var allMenus = [];
+
+        function loadResources() {
+            $.get('/api/resource/list', function(res) {
+                if (res.code === 200) {
+                    var tbody = $('#resourceTableBody');
+                    tbody.empty();
+                    res.data.forEach(function(item) {
+                        var statusText = item.status === 1 ?
+                            '<span class="label label-success">启用</span>' :
+                            '<span class="label label-danger">禁用</span>';
+
+                        var methodClass = 'badge-get';
+                        if (item.apiMethod === 'POST') methodClass = 'badge-post';
+                        else if (item.apiMethod === 'PUT') methodClass = 'badge-put';
+                        else if (item.apiMethod === 'DELETE') methodClass = 'badge-delete';
+
+                        var tr = '<tr>' +
+                            '<td>' + item.id + '</td>' +
+                            '<td>' +
+                            '<div class="api-info-box">' +
+                            '<div class="api-name">' + item.apiName + '<span class="badge-method ' + methodClass + '">' + item.apiMethod + '</span></div>' +
+                            '<div class="api-url">' + item.apiUrl + '</div>' +
+                            '</div>' +
+                            '</td>' +
+                            '<td><span class="label label-primary">' + item.menuName + '</span></td>' +
+                            '<td>' + (item.description || '-') + '</td>' +
+                            '<td>' + statusText + '</td>' +
+                            '<td>' +
+                            '<button class="btn btn-sm btn-danger" onclick="deleteResource(' + item.id + ')"><i class="fa fa-unlink"></i> 解除绑定</button>' +
+                            '</td>' +
+                            '</tr>';
+                        tbody.append(tr);
+                    });
+                } else if (res.code === 403) {
+                    alert('权限不足');
+                }
+            }).fail(function(xhr) {
+                if (xhr.status === 403) {
+                    alert('权限不足');
+                }
+            });
+        }
+
+        function loadApisAndMenus() {
+            // 加载API列表
+            $.get('/api/info/list', function(res) {
+                if (res.code === 200) {
+                    allApis = res.data;
+                    var options = '<option value="">请选择API</option>';
+                    res.data.forEach(function(api) {
+                        options += '<option value="' + api.id + '">' + api.apiName + ' (' + api.apiMethod + ' ' + api.apiUrl + ')</option>';
+                    });
+                    $('#apiId').html(options);
+                }
+            });
+
+            // 加载菜单列表
+            $.get('/api/menu/list', function(res) {
+                if (res.code === 200) {
+                    allMenus = res.data;
+                    var options = '<option value="">请选择菜单</option>';
+                    // 只显示类型为2的菜单（功能菜单）
+                    res.data.filter(function(m) { return m.menuType === 2; }).forEach(function(menu) {
+                        options += '<option value="' + menu.id + '">' + menu.menuName + '</option>';
+                    });
+                    $('#menuId').html(options);
+                }
+            });
+        }
+
+        function openResourceModal() {
+            $('#resourceForm')[0].reset();
+            loadApisAndMenus();
+            $('#resourceModal').modal('show');
+        }
+
+        function saveResource() {
+            var apiId = $('#apiId').val();
+            var menuId = $('#menuId').val();
+
+            if (!apiId) {
+                alert('请选择API');
+                return;
+            }
+            if (!menuId) {
+                alert('请选择菜单');
+                return;
+            }
+
+            var resource = {
+                apiId: parseInt(apiId),
+                menuId: parseInt(menuId),
+                description: $('#resourceDescription').val(),
+                status: parseInt($('#resourceStatus').val())
+            };
+
+            $.ajax({
+                url: '/api/resource/save',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(resource),
+                success: function(res) {
+                    if (res.code === 200) {
+                        $('#resourceModal').modal('hide');
+                        loadResources();
+                    } else {
+                        alert(res.message || '保存失败');
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 403) {
+                        alert('权限不足');
+                    } else {
+                        alert('保存失败');
+                    }
+                }
+            });
+        }
+
+        function deleteResource(id) {
+            if (!confirm('确定要解除这个API资源绑定吗？')) {
+                return;
+            }
+
+            $.ajax({
+                url: '/api/resource/' + id,
+                type: 'DELETE',
+                success: function(res) {
+                    if (res.code === 200) {
+                        loadResources();
+                    } else {
+                        alert(res.message || '删除失败');
+                    }
+                },
+                error: function(xhr) {
+                    if (xhr.status === 403) {
+                        alert('权限不足');
+                    } else {
+                        alert('删除失败');
+                    }
+                }
+            });
+        }
+
+        function loadUserMenus() {
+            $.get('/api/menu/user', function(res) {
+                if (res.code === 200) {
+                    renderMenus(res.data);
+                }
+            });
+        }
+
+        function renderMenus(menus) {
+            var $menu = $('#sidebarMenu');
+            $menu.empty();
+
+            var parentMenus = menus.filter(function(m) { return m.menuType === 1; });
+            var childMenus = menus.filter(function(m) { return m.menuType === 2; });
+
+            parentMenus.forEach(function(parent) {
+                var children = childMenus.filter(function(c) { return c.parentId === parent.id; });
+                if (children.length > 0) {
+                    children.forEach(function(child) {
+                        var isActive = child.menuCode === 'api-resource' ? 'active' : '';
+                        var icon = child.menuIcon || 'fa-circle';
+                        var li = '<li class="' + isActive + '"><a href="' + (child.menuUrl || '#') + '"><i class="fa ' + icon + '"></i> ' + child.menuName + '</a></li>';
+                        $menu.append(li);
+                    });
+                }
+            });
+        }
+
+        $(function() {
+            loadUserMenus();
+            loadResources();
+        });
+    </script>
+</body>
+</html>
