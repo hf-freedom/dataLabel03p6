@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>权限不足</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 60px 80px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .error-code {
+            font-size: 120px;
+            font-weight: bold;
+            color: #e74c3c;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .error-title {
+            font-size: 28px;
+            color: #333;
+            margin: 20px 0;
+        }
+        .error-message {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .btn-back {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn-login {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #95a5a6;
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            margin: 0 10px;
+        }
+        .btn-login:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="error-code">403</div>
+        <h1 class="error-title">权限不足</h1>
+        <p class="error-message">抱歉，您没有权限访问此资源，请联系管理员获取相应权限。</p>
+        <div>
+            <a href="javascript:history.back()" class="btn-back">返回上一页</a>
+            <a href="/login" class="btn-login">重新登录</a>
+        </div>
+    </div>
+</body>
+</html>

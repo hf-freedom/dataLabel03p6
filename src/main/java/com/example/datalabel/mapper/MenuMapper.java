@@ -1,6 +1,6 @@
 package com.example.datalabel.mapper;
 
-import com.example.datalabel.cache.LocalCache;
+import com.example.datalabel.cache.SILocalCache;
 import com.example.datalabel.entity.Menu;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -12,45 +12,41 @@ import java.util.List;
 public class MenuMapper {
     
     @Autowired
-    private LocalCache localCache;
+    private SILocalCache siLocalCache;
     
     public int insert(Menu menu) {
-        menu.setId(localCache.generateMenuId());
+        menu.setId(siLocalCache.generateMenuId());
         menu.setCreateTime(LocalDateTime.now());
         menu.setUpdateTime(LocalDateTime.now());
-        localCache.putMenu(menu);
+        siLocalCache.putMenu(menu);
         return 1;
     }
     
     public int update(Menu menu) {
-        Menu existing = localCache.getMenu(menu.getId());
+        Menu existing = siLocalCache.getMenu(menu.getId());
         if (existing == null) {
             return 0;
         }
         menu.setCreateTime(existing.getCreateTime());
         menu.setUpdateTime(LocalDateTime.now());
-        localCache.putMenu(menu);
+        siLocalCache.putMenu(menu);
         return 1;
     }
     
     public int deleteById(Long id) {
-        localCache.removeMenu(id);
+        siLocalCache.removeMenu(id);
         return 1;
     }
     
     public Menu selectById(Long id) {
-        return localCache.getMenu(id);
+        return siLocalCache.getMenu(id);
     }
     
     public List<Menu> selectAll() {
-        return localCache.getAllMenus();
+        return siLocalCache.getAllMenus();
     }
     
     public List<Menu> selectByIds(List<Long> ids) {
-        return localCache.getMenusByIds(ids);
-    }
-    
-    public List<Menu> selectByParentId(Long parentId) {
-        return localCache.getMenusByParentId(parentId);
+        return siLocalCache.getMenusByIds(ids);
     }
 }

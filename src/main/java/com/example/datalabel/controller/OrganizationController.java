@@ -1,6 +1,7 @@
 package com.example.datalabel.controller;
 
-import com.example.datalabel.common.Result;
+import com.example.datalabel.common.SIApiPermission;
+import com.example.datalabel.common.SIResult;
 import com.example.datalabel.entity.Organization;
 import com.example.datalabel.service.OrganizationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,27 +17,32 @@ public class OrganizationController {
     private OrganizationService organizationService;
     
     @GetMapping("/list")
-    public Result<List<Organization>> list() {
-        return Result.success(organizationService.getAll());
+    @SIApiPermission(name = "组织列表", resourceCode = "org")
+    public SIResult<List<Organization>> list() {
+        return SIResult.success(organizationService.getAll());
     }
     
     @GetMapping("/tree")
-    public Result<List<Organization>> tree() {
-        return Result.success(organizationService.getAll());
+    @SIApiPermission(name = "组织树", resourceCode = "org")
+    public SIResult<List<Organization>> tree() {
+        return SIResult.success(organizationService.getAll());
     }
     
     @GetMapping("/{id}")
-    public Result<Organization> getById(@PathVariable Long id) {
-        return Result.success(organizationService.getById(id));
+    @SIApiPermission(name = "获取组织", resourceCode = "org")
+    public SIResult<Organization> getById(@PathVariable Long id) {
+        return SIResult.success(organizationService.getById(id));
     }
     
     @PostMapping("/save")
-    public Result<Boolean> save(@RequestBody Organization org) {
-        return Result.success(organizationService.save(org));
+    @SIApiPermission(name = "保存组织", resourceCode = "org")
+    public SIResult<Boolean> save(@RequestBody Organization org) {
+        return SIResult.success(organizationService.save(org));
     }
     
     @DeleteMapping("/{id}")
-    public Result<Boolean> delete(@PathVariable Long id) {
-        return Result.success(organizationService.delete(id));
+    @SIApiPermission(name = "删除组织", resourceCode = "org")
+    public SIResult<Boolean> delete(@PathVariable Long id) {
+        return SIResult.success(organizationService.delete(id));
     }
 }
